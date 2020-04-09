@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.vote.dao.VoteOptionDao">
+
+    <resultMap type="com.example.vote.entity.VoteOption" id="VoteOptionMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="serialnumber" column="serialnumber" jdbcType="INTEGER"/>
+        <result property="name" column="name" jdbcType="VARCHAR"/>
+        <result property="aid" column="aid" jdbcType="INTEGER"/>
+        <result property="score" column="score" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="VoteOptionMap">
+        select
+          id, serialnumber, name, aid, score
+        from mybatis.vote_option
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="VoteOptionMap">
+        select
+          id, serialnumber, name, aid, score
+        from mybatis.vote_option
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="queryByAid" resultMap="VoteOptionMap">
+        select
+          id, serialnumber, name, aid, score
+        from mybatis.vote_option
+        where aid = #{aid}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="VoteOptionMap">
+        select
+          id, serialnumber, name, aid, score
+        from mybatis.vote_option
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="serialnumber != null">
+                and serialnumber = #{serialnumber}
+            </if>
+            <if test="name != null and name != ''">
+                and name = #{name}
+            </if>
+            <if test="aid != null">
+                and aid = #{aid}
+            </if>
+            <if test="score != null">
+                and score = #{score}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into mybatis.vote_option(serialnumber, name, aid, score)
+        values (#{serialnumber}, #{name}, #{aid}, #{score})
+    </insert>
+
+    <!--新增所有列-->
+    <insert id="batchInsert" keyProperty="id" useGeneratedKeys="true">
+        insert into mybatis.vote_option(serialnumber, name, aid, score)
+        values
+        <foreach item="item" collection="optionList" separator=",">
+            (#{item.serialnumber},#{item.name},#{item.aid},#{item.score})
+        </foreach>
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update mybatis.vote_option
+        <set>
+            <if test="serialnumber != null">
+                serialnumber = #{serialnumber},
+            </if>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="aid != null">
+                aid = #{aid},
+            </if>
+            <if test="score != null">
+                score = #{score},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <update id="batchUpdate" parameterType="java.util.List">
+        <foreach collection="optionList" index="index" item="item" open="" separator=";" close="">
+            update mybatis.vote_option
+            <set>
+                serialnumber = #{item.serialnumber},
+                name = #{item.name},
+                aid = #{item.aid},
+                score = #{item.score}
+            </set>
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from mybatis.vote_option where id = #{id}
+    </delete>
+
+</mapper>
