@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 @Service("voteActivityService")
 public class VoteActivityServiceImpl implements VoteActivityService {
     private RuntimeSchema<VoteActivityDto> activitySchema = RuntimeSchema.createFrom(VoteActivityDto.class);
-
+    private Lock lock = new ReentrantLock();
     @Resource
     private VoteActivityDao voteActivityDao;
 
@@ -142,25 +142,32 @@ public class VoteActivityServiceImpl implements VoteActivityService {
     }
 
     @Override
-    public synchronized Map<String, Object> doVote(Integer aid, Integer sid, String telphone, BiFunction<Integer, String, VoteStatusEnum> biFunction) {
+    public  Map<String, Object> doVote(Integer aid, Integer sid, String telphone, BiFunction<Integer, String, VoteStatusEnum> biFunction) {
         //只用考虑投票正在进行中
         Map<String, Object> resMap = new HashMap<>();
-        VoteStatusEnum status = VoteUtils.getDtoInfo(aid);
-        if(!status.getStatus().equals(IVoteConst.VOTEDURING_STATUS)){
-            resMap.put("data", null);
-            resMap.put("msg", VoteStatusEnum.getVoteStatus(IVoteConst.VOTEDEFAULT_STATUS).getDescription());
-            return resMap;
-        }
+        lock.lock();
+        try {
 
-        VoteStatusEnum statusEnum = biFunction.apply(aid, telphone);
-        String scoreKey = "vote:" + aid + ":score";
-        String scoreValue = "vote:" + sid + ":option";
-        if (statusEnum.getStatus().equals(IVoteConst.VOTEDEFAULT_STATUS)) {
-            VoteUtils.scoreIncr(scoreKey, 1, scoreValue);
+
+            VoteStatusEnum status = VoteUtils.getDtoInfo(aid);
+            if (!status.getStatus().equals(IVoteConst.VOTEDURING_STATUS)) {
+                resMap.put("data", null);
+                resMap.put("msg", VoteStatusEnum.getVoteStatus(IVoteConst.VOTEDEFAULT_STATUS).getDescription());
+                return resMap;
+            }
+
+            VoteStatusEnum statusEnum = biFunction.apply(aid, telphone);
+            String scoreKey = "vote:" + aid + ":score";
+            String scoreValue = "vote:" + sid + ":option";
+            if (statusEnum.getStatus().equals(IVoteConst.VOTEDEFAULT_STATUS)) {
+                VoteUtils.scoreIncr(scoreKey, 1, scoreValue);
+            }
+            VoteActivityDto resDto = dealVoteDetail(aid, statusEnum.getStatus());
+            resMap.put("msg", statusEnum.getDescription());
+            resMap.put("data", resDto);
+        }finally {
+            lock.unlock();
         }
-        VoteActivityDto resDto = dealVoteDetail(aid, statusEnum.getStatus());
-        resMap.put("data", resDto);
-        resMap.put("msg", statusEnum.getDescription());
 
         return resMap;
     }
