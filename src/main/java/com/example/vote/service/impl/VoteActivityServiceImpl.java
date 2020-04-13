@@ -7,6 +7,8 @@ import com.example.vote.entity.*;
 import com.example.vote.service.VoteActivityService;
 import com.example.vote.service.util.ProtoStuffUtils;
 import com.example.vote.service.util.VoteUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -34,8 +36,8 @@ import java.util.stream.Collectors;
  */
 @Service("voteActivityService")
 public class VoteActivityServiceImpl implements VoteActivityService {
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private RuntimeSchema<VoteActivityDto> activitySchema = RuntimeSchema.createFrom(VoteActivityDto.class);
-    private Lock lock = new ReentrantLock();
     @Resource
     private VoteActivityDao voteActivityDao;
 
@@ -142,32 +144,27 @@ public class VoteActivityServiceImpl implements VoteActivityService {
     }
 
     @Override
-    public  Map<String, Object> doVote(Integer aid, Integer sid, String telphone, BiFunction<Integer, String, VoteStatusEnum> biFunction) {
+    public Map<String, Object> doVote(Integer aid, Integer sid, String telphone, BiFunction<Integer, String, VoteStatusEnum> biFunction) {
         //只用考虑投票正在进行中
         Map<String, Object> resMap = new HashMap<>();
-        lock.lock();
-        try {
 
-
-            VoteStatusEnum status = VoteUtils.getDtoInfo(aid);
-            if (!status.getStatus().equals(IVoteConst.VOTEDURING_STATUS)) {
-                resMap.put("data", null);
-                resMap.put("msg", VoteStatusEnum.getVoteStatus(IVoteConst.VOTEDEFAULT_STATUS).getDescription());
-                return resMap;
-            }
-
-            VoteStatusEnum statusEnum = biFunction.apply(aid, telphone);
-            String scoreKey = "vote:" + aid + ":score";
-            String scoreValue = "vote:" + sid + ":option";
-            if (statusEnum.getStatus().equals(IVoteConst.VOTEDEFAULT_STATUS)) {
-                VoteUtils.scoreIncr(scoreKey, 1, scoreValue);
-            }
-            VoteActivityDto resDto = dealVoteDetail(aid, statusEnum.getStatus());
-            resMap.put("msg", statusEnum.getDescription());
-            resMap.put("data", resDto);
-        }finally {
-            lock.unlock();
+        VoteStatusEnum status = VoteUtils.getDtoInfo(aid);
+        if (!status.getStatus().equals(IVoteConst.VOTEDURING_STATUS)) {
+            resMap.put("data", null);
+            resMap.put("msg", VoteStatusEnum.getVoteStatus(IVoteConst.VOTEDEFAULT_STATUS).getDescription());
+            return resMap;
         }
+
+        VoteStatusEnum statusEnum = biFunction.apply(aid, telphone);
+        String scoreKey = "vote:" + aid + ":score";
+        String scoreValue = "vote:" + sid + ":option";
+        if (statusEnum.getStatus().equals(IVoteConst.VOTEDEFAULT_STATUS)) {
+            VoteUtils.scoreIncr(scoreKey, 1, scoreValue);
+            logger.info("投票成功！");
+        }
+        VoteActivityDto resDto = dealVoteDetail(aid, statusEnum.getStatus());
+        resMap.put("msg", statusEnum.getDescription());
+        resMap.put("data", resDto);
 
         return resMap;
     }

@@ -2,6 +2,8 @@ package com.example.vote.entity;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.springframework.context.annotation.ImportResource;
+import org.springframework.context.annotation.PropertySource;
 
 import java.util.Date;
 import java.io.Serializable;

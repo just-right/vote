@@ -5,6 +5,9 @@ import com.dyuproject.protostuff.runtime.RuntimeSchema;
 import com.example.vote.dao.VoteActivityDao;
 import com.example.vote.dao.VoteOptionDao;
 import com.example.vote.entity.*;
+import com.example.vote.service.IDistributedLockerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -34,17 +37,15 @@ import java.util.stream.Collectors;
  */
 @Component
 public class VoteUtils {
-
-    private static Lock lock = new ReentrantLock() {
-    };
+    private static Logger logger = LoggerFactory.getLogger("VoteUtils.class");
+    private static Lock lock = new ReentrantLock() ;
     private static RuntimeSchema<VoteActivity> activitySchema = RuntimeSchema.createFrom(VoteActivity.class);
-
-
     private static JedisPool jedisPool1;
     private static VoteActivityDao voteActivityDao1;
     private static VoteOptionDao voteOptionDao1;
     private static DataSourceTransactionManager dataSourceTransactionManager1;
     private static TransactionDefinition transactionDefinition1;
+    private static IDistributedLockerService lockerService1;
     @Autowired
     DataSourceTransactionManager dataSourceTransactionManager2;
     @Autowired
@@ -58,6 +59,9 @@ public class VoteUtils {
     @Autowired
     private VoteOptionDao voteOptionDao2;
 
+    @Autowired
+    private IDistributedLockerService lockerService2;
+
     @PostConstruct
     private void init() {
         jedisPool1 = jedisPool2;
@@ -65,6 +69,7 @@ public class VoteUtils {
         voteOptionDao1 = voteOptionDao2;
         transactionDefinition1 = transactionDefinition2;
         dataSourceTransactionManager1 = dataSourceTransactionManager2;
+        lockerService1 = lockerService2;
     }
 
     public static void setValue(String redisType, String key, String... value) {
@@ -277,12 +282,14 @@ public class VoteUtils {
 
 
     public static void scoreIncr(String socreKey, Integer num, String scoreValue) {
-        lock.lock();
-        try (Jedis jedis = jedisPool1.getResource()) {
-            jedis.zincrby(socreKey, num, scoreValue);
-        }finally {
-            lock.unlock();
-        }
+        lockerService1.lock(UUID.randomUUID().toString(),()->{
+            try (Jedis jedis = jedisPool1.getResource()) {
+                jedis.zincrby(socreKey, num, scoreValue);
+                logger.info("投票成功!");
+                return null;
+            }
+        });
+
     }
 
 

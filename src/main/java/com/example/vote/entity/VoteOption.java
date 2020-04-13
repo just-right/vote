@@ -1,6 +1,7 @@
 package com.example.vote.entity;
 
 import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.io.Serializable;
 
