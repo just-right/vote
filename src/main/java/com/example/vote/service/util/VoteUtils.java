@@ -282,7 +282,8 @@ public class VoteUtils {
 
 
     public static void scoreIncr(String socreKey, Integer num, String scoreValue) {
-        lockerService1.lock(UUID.randomUUID().toString(),()->{
+        //lockName为固定值 --- 不能由UUID生成
+        lockerService1.lock("vote:distributed:"+socreKey,()->{
             try (Jedis jedis = jedisPool1.getResource()) {
                 jedis.zincrby(socreKey, num, scoreValue);
                 logger.info("投票成功!");
