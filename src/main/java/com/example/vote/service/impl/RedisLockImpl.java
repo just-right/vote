@@ -42,7 +42,6 @@ public class RedisLockImpl implements IDistributedLockerService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        redLock.unlock();
         return null;
     }
 }
