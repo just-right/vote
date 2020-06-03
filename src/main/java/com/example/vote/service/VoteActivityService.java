@@ -67,7 +67,7 @@ public interface VoteActivityService {
      * @param function
      * @return
      */
-    VoteActivityDto createVoteActivity(VoteActivityDto dto, Function<VoteActivityDto,Integer> function);
+    VoteActivityDto createVoteActivity(VoteActivityDto dto, Function<VoteActivityDto,Integer> function) throws Exception;
 
     /**
      * 查看投票活动信息

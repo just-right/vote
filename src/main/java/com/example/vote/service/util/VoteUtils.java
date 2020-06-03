@@ -167,7 +167,7 @@ public class VoteUtils {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public static Integer buildVoteActivityDto(VoteActivityDto dto) {
+    public static Integer buildVoteActivityDto(VoteActivityDto dto)  {
         //插入记录
         VoteActivity voteActivity = new VoteActivity();
         voteActivity.setName(dto.getName())
@@ -175,7 +175,6 @@ public class VoteUtils {
                 .setEnddatetime(dto.getEnddatetime());
         //开启事务
         TransactionStatus transactionStatus = dataSourceTransactionManager1.getTransaction(transactionDefinition1);
-
         try {
             //TODO 记录时间 - 区分时区
             // 创建活动已通过
@@ -188,17 +187,16 @@ public class VoteUtils {
                 option.setAid(aid);
                 return option;
             }).collect(Collectors.toList());
+            int a = 1/0;
             voteOptionDao1.batchInsert(optionList);
             //提交事务
             dataSourceTransactionManager1.commit(transactionStatus);
             return aid;
         } catch (Exception e) {
-            e.printStackTrace();
             //数据回滚
             dataSourceTransactionManager1.rollback(transactionStatus);
         }
         return null;
-
     }
 
 

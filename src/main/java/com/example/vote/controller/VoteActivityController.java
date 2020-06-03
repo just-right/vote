@@ -6,6 +6,7 @@ import com.example.vote.entity.VoteActivityDto;
 import com.example.vote.entity.VoteStatusEnum;
 import com.example.vote.service.VoteActivityService;
 import com.example.vote.service.util.VoteUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -49,9 +50,9 @@ public class VoteActivityController {
      * @return
      */
     @PostMapping(value = "/createVote")
-    public Map<String, Object> createVote(@RequestBody VoteActivityDto activity) {
+    public Map<String, Object> createVote(@RequestBody VoteActivityDto activity) throws Exception {
         Map<String, Object> resMap = new HashMap<>();
-        VoteActivityDto dto = voteActivityService.createVoteActivity(activity, VoteUtils::buildVoteActivityDto);
+        VoteActivityDto dto = voteActivityService.createVoteActivity(activity,VoteUtils::buildVoteActivityDto);
         if (dto == null) {
             resMap.put("msg", IVoteConst.CREATE_FAIL);
         } else {

@@ -10,6 +10,7 @@ import com.example.vote.service.util.VoteUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -106,10 +107,10 @@ public class VoteActivityServiceImpl implements VoteActivityService {
     }
 
     @Override
+    @Transactional
     public VoteActivityDto createVoteActivity(VoteActivityDto dto, Function<VoteActivityDto, Integer> function) {
         //插入记录
         Integer aid = function.apply(dto);
-
         //存入缓存
         String scoreKey = "vote:" + aid + ":score";
         String voteActivityKey = "vote:" + aid + ":activity";
